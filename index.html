@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ContaWiki – Construcción Colaborativa de Conceptos Contables y NIIF para Microempresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#020a1f;--bg1:#06204e;--bg2:#0b3d99;
+  --blue:#1d6bff;--blue2:#38a1ff;
+  --neon:#f6feff;--ice:#cdeeff;
+  --text:#e6f0ff;--muted:#9fbbea;
+  --panel:rgba(4,17,48,.74);--panel2:rgba(10,38,96,.55);
+  --line:rgba(170,215,255,.24);
+  --glow:0 0 14px rgba(190,235,255,.55),0 0 2px rgba(255,255,255,.9);
+  --head:'Sora','Segoe UI',system-ui,sans-serif;
+  --body:'Manrope','Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;min-height:100vh;color:var(--text);font:16px/1.75 var(--body);
+  background:linear-gradient(155deg,var(--bg0),var(--bg1) 48%,var(--bg2)) fixed;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+   radial-gradient(900px 520px at 85% -10%,rgba(80,170,255,.30),transparent 60%),
+   radial-gradient(700px 520px at 0% 100%,rgba(40,120,255,.26),transparent 60%),
+   linear-gradient(rgba(180,220,255,.05) 1px,transparent 1px) 0 0/46px 46px,
+   linear-gradient(90deg,rgba(180,220,255,.05) 1px,transparent 1px) 0 0/46px 46px}
+#bgArt{position:fixed;inset:0;z-index:-2;pointer-events:none}
+#bgArt svg{width:100%;height:100%;display:block}
+a{color:var(--ice);text-decoration-color:rgba(205,238,255,.45);text-underline-offset:3px}
+a:hover{color:#fff;text-shadow:var(--glow)}
+:focus-visible{outline:2px solid var(--neon);outline-offset:2px;border-radius:6px}
+button{font:inherit;color:inherit;cursor:pointer}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* progreso de lectura */
+.progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:80;background:transparent}
+.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue2),var(--neon));box-shadow:0 0 12px var(--neon)}
+
+/* barra superior */
+.nav{position:fixed;top:3px;left:0;right:0;height:62px;z-index:60;display:flex;align-items:center;gap:6px;padding:0 20px;
+  background:rgba(3,13,38,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:14px;color:var(--neon)}
+.brand svg{width:34px;height:34px;filter:drop-shadow(0 0 6px rgba(190,235,255,.8))}
+.brand b{font:700 19px var(--head);letter-spacing:.2px;text-shadow:var(--glow)}
+.menu{display:flex;align-items:center;gap:2px}
+.menu>a,.menu>.dd>button{background:none;border:0;color:var(--text);padding:9px 13px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:6px}
+.menu>a:hover,.menu>.dd>button:hover,.menu a.on,.dd.open>button{background:rgba(120,190,255,.16);color:#fff;text-shadow:var(--glow)}
+.dd{position:relative}
+.dd-list{position:absolute;top:calc(100% + 8px);left:0;min-width:300px;padding:8px;border-radius:14px;background:rgba(4,16,44,.97);border:1px solid var(--line);
+  box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(190,235,255,.08);display:none}
+.dd.open .dd-list{display:block}
+.dd-list a,.dd-list button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:9px;color:var(--text);text-decoration:none;font-size:14.5px;line-height:1.35}
+.dd-list a small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.dd-list a:hover,.dd-list button:hover{background:rgba(120,190,255,.16);color:#fff}
+.sp{flex:1}
+.search{position:relative;width:min(320px,34vw)}
+.search input{width:100%;height:40px;border-radius:999px;border:1px solid var(--line);background:rgba(8,30,80,.7);color:var(--neon);padding:0 16px 0 40px;font:inherit;font-size:14.5px}
+.search input::placeholder{color:#86a6dc}
+.search input:focus{outline:none;border-color:var(--neon);box-shadow:0 0 0 3px rgba(190,235,255,.18),var(--glow)}
+.search svg{position:absolute;left:13px;top:11px;width:18px;height:18px;stroke:var(--ice);fill:none;stroke-width:2}
+.results{position:absolute;top:48px;left:0;right:0;max-height:70vh;overflow:auto;border-radius:14px;background:rgba(4,16,44,.98);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.55);display:none}
+.results.show{display:block}
+.results a{display:block;padding:11px 14px;text-decoration:none;color:var(--text);border-bottom:1px solid rgba(170,215,255,.12)}
+.results a:last-child{border:0}
+.results a:hover{background:rgba(120,190,255,.14)}
+.results b{display:block;font-family:var(--head);color:var(--neon);font-size:14px}
+.results span{font-size:13px;color:var(--muted);line-height:1.5;display:block}
+.results mark{background:rgba(246,254,255,.9);color:#04122e;border-radius:3px;padding:0 2px}
+.results .none{padding:14px;color:var(--muted);font-size:14px}
+.userchip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(8,30,80,.6);border-radius:999px;padding:5px 12px 5px 6px;font-size:13.5px;font-weight:600;max-width:170px}
+.userchip i{font-style:normal;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;font:700 13px var(--head);box-shadow:0 0 10px rgba(56,161,255,.7);flex:none}
+.userchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.burger{display:none;background:none;border:1px solid var(--line);border-radius:10px;width:40px;height:40px;place-items:center}
+.burger svg{width:22px;height:22px;stroke:var(--neon);stroke-width:2;fill:none}
+
+/* estructura */
+.shell{display:grid;grid-template-columns:268px minmax(0,1fr) 236px;gap:24px;max-width:1540px;margin:0 auto;padding:92px 22px 40px}
+.side,.toc{position:sticky;top:88px;align-self:start;max-height:calc(100vh - 104px);overflow:auto;scrollbar-width:thin;scrollbar-color:rgba(170,215,255,.35) transparent}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 20px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.side .card{padding:14px 10px}
+.side h4,.toc h4{margin:10px 12px 6px;font:600 13px var(--head);color:var(--muted);letter-spacing:.3px}
+.side a.item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:11px;text-decoration:none;color:var(--text);font-size:14.5px;font-weight:600;line-height:1.3}
+.side a.item .ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(80,150,255,.18);border:1px solid rgba(170,215,255,.25);font:700 13px var(--head);color:var(--neon)}
+.side a.item small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+.side a.item:hover{background:rgba(120,190,255,.14)}
+.side a.item.on{background:linear-gradient(90deg,rgba(40,120,255,.5),rgba(40,120,255,.12));box-shadow:inset 3px 0 0 var(--neon);color:#fff}
+.side a.item.on .ic{background:var(--neon);color:#04122e;box-shadow:var(--glow)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--neon);box-shadow:0 0 8px var(--neon);margin-left:auto;flex:none}
+.stat{margin:6px 8px 4px;padding:12px;border-radius:12px;background:rgba(20,70,170,.28);border:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.stat b{color:var(--neon);font-family:var(--head)}
+.stat button{margin-top:8px;width:100%}
+.toc .card{padding:14px 8px}
+.toc a{display:block;padding:6px 12px;border-left:2px solid rgba(170,215,255,.2);color:var(--muted);text-decoration:none;font-size:13.5px;line-height:1.4;margin-left:6px}
+.toc a.l3{padding-left:24px;font-size:13px}
+.toc a:hover{color:#fff}
+.toc a.on{color:var(--neon);border-left-color:var(--neon);text-shadow:var(--glow)}
+
+/* artículo */
+.main{min-width:0}
+.page{padding:28px 34px 30px}
+.crumbs{font-size:13.5px;color:var(--muted);margin-bottom:6px}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{color:#fff}
+.titlebar{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.titlebar h1{flex:1;min-width:220px;margin:0;font:800 clamp(28px,3.4vw,42px)/1.12 var(--head);color:var(--neon);text-shadow:0 0 18px rgba(170,225,255,.65),0 0 2px #fff;letter-spacing:-.4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding-top:6px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:rgba(20,70,170,.35);color:var(--text);padding:9px 15px;border-radius:11px;font-weight:700;font-size:14px;text-decoration:none;transition:background .15s,box-shadow .15s,transform .15s}
+.btn:hover{background:rgba(50,130,255,.45);color:#fff;box-shadow:0 0 16px rgba(120,200,255,.4)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,#2f8bff,#1458e6);border-color:rgba(200,235,255,.6);color:#fff;box-shadow:0 0 18px rgba(60,150,255,.55)}
+.btn.primary:hover{box-shadow:0 0 26px rgba(150,220,255,.8)}
+.btn.glow{background:var(--neon);color:#04122e;border-color:var(--neon);box-shadow:var(--glow)}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:9px}
+.btn.danger{border-color:rgba(255,150,150,.5);color:#ffd0d0}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.tabs{display:flex;gap:4px;margin:20px 0 4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs a{padding:10px 16px;text-decoration:none;color:var(--muted);font-weight:700;font-size:14.5px;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a:hover{color:#fff}
+.tabs a.on{color:var(--neon);border-bottom-color:var(--neon);text-shadow:var(--glow)}
+.tabs a em{font-style:normal;margin-left:6px;font-size:12px;background:rgba(246,254,255,.14);border-radius:999px;padding:1px 8px}
+
+/* contenido tipo wiki */
+.prose{margin-top:18px;max-width:78ch}
+.prose.wide{max-width:none}
+.prose h2{font:700 clamp(22px,2.4vw,28px)/1.25 var(--head);color:var(--neon);margin:42px 0 12px;padding-bottom:10px;text-shadow:0 0 14px rgba(170,225,255,.5);border-bottom:1px solid var(--line);position:relative}
+.prose h2::after{content:"";position:absolute;left:0;bottom:-1px;width:84px;height:3px;background:var(--neon);box-shadow:0 0 12px var(--neon);border-radius:3px}
+.prose h2:first-child{margin-top:8px}
+.prose h3{font:700 19px/1.3 var(--head);color:var(--ice);margin:30px 0 8px}
+.prose h4{font:700 16px var(--head);color:var(--neon);margin:22px 0 6px}
+.prose p{margin:0 0 14px}
+.prose strong{color:#fff}
+.prose ul,.prose ol{padding-left:22px;margin:0 0 16px}
+.prose li{margin:7px 0}
+.prose li::marker{color:var(--blue2)}
+.prose .lead{font:600 20px/1.5 var(--head);color:var(--ice);margin:6px 0 4px}
+.prose .example{border-left:3px solid var(--blue2);background:rgba(40,120,255,.14);padding:11px 16px;border-radius:0 12px 12px 0}
+.prose .note{font-size:14.5px;color:var(--muted);font-style:italic}
+.prose .formula{margin:14px 0 18px;padding:16px 20px;border-radius:14px;border:1px solid rgba(220,245,255,.65);background:rgba(2,12,40,.7);
+  font:700 italic clamp(17px,2vw,22px)/1.4 var(--head);color:var(--neon);text-shadow:var(--glow);box-shadow:0 0 22px rgba(120,200,255,.25),inset 0 0 24px rgba(60,140,255,.18);text-align:center;overflow-x:auto}
+.tablewrap{overflow-x:auto;margin:14px 0 20px;border-radius:14px;border:1px solid var(--line);background:rgba(3,14,40,.5)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{padding:11px 14px;text-align:left;vertical-align:top;border-bottom:1px solid rgba(170,215,255,.14)}
+th{font:700 14px var(--head);color:#04122e;background:linear-gradient(180deg,#f6feff,#bfe6ff);position:sticky;top:0}
+tbody tr:nth-child(even){background:rgba(60,140,255,.09)}
+tbody tr:hover{background:rgba(90,170,255,.18)}
+tr.total td{font-weight:800;color:var(--neon);background:rgba(60,140,255,.22);border-top:1px solid rgba(220,245,255,.5)}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.steps{list-style:none;padding:0;counter-reset:s;display:grid;gap:12px;margin:14px 0 18px}
+.steps li{counter-increment:s;position:relative;padding:14px 16px 14px 62px;border-radius:14px;border:1px solid var(--line);background:rgba(20,70,170,.24);margin:0}
+.steps li::before{content:counter(s);position:absolute;left:14px;top:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 15px var(--head);background:var(--neon);color:#04122e;box-shadow:var(--glow)}
+.steps strong{color:var(--neon)}
+.authors{font:600 18px/1.55 var(--head);color:#fff}
+.refs{list-style:none;padding:0}
+.refs li{padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(10,38,96,.4);margin:9px 0;word-break:break-word;overflow-wrap:anywhere}
+.quote{margin:14px 0;padding:16px 20px;border-radius:14px;border:1px solid var(--line);background:rgba(20,70,170,.22)}
+.quote p:last-child{margin:0}
+.weblink{display:block;margin:12px 0 4px;padding:18px 22px;border-radius:16px;border:1px solid rgba(220,245,255,.65);background:rgba(2,12,40,.7);color:var(--neon);font:700 17px var(--head);text-decoration:none;box-shadow:0 0 22px rgba(120,200,255,.25);overflow-wrap:anywhere}
+.weblink:hover{box-shadow:0 0 34px rgba(170,230,255,.6)}
+
+/* portada */
+.cover{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:center;margin:6px 0 10px}
+.cover h1.ct{font:800 clamp(28px,3.6vw,46px)/1.12 var(--head);color:var(--neon);text-shadow:0 0 22px rgba(170,225,255,.7),0 0 2px #fff;margin:0 0 18px}
+.cover .meta{margin-top:18px;display:grid;gap:3px;color:var(--ice)}
+.cover .meta span:last-child{font-weight:700;color:#fff}
+.hero{border-radius:22px;border:1px solid var(--line);background:radial-gradient(circle at 70% 25%,rgba(80,170,255,.35),rgba(4,17,48,.2) 70%);padding:6px;min-height:260px}
+.hero svg{width:100%;height:auto;display:block;filter:drop-shadow(0 0 7px rgba(190,235,255,.55))}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin:12px 0 4px}
+.tile{display:block;text-decoration:none;color:var(--text);padding:18px 18px 16px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(40,120,255,.28),rgba(4,17,48,.6));transition:border-color .15s,box-shadow .15s,transform .15s}
+.tile:hover{border-color:var(--neon);box-shadow:0 0 24px rgba(150,220,255,.4);transform:translateY(-2px);color:#fff}
+.tile b{display:block;font:700 17px var(--head);color:var(--neon);margin-bottom:4px}
+.tile span{font-size:14px;color:var(--ice);line-height:1.5;display:block}
+
+/* pie de artículo */
+.metaline{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.pn{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.pn a{padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(20,70,170,.24);text-decoration:none;color:var(--text);font-weight:700}
+.pn a small{display:block;color:var(--muted);font-weight:500;font-size:12.5px}
+.pn a:hover{border-color:var(--neon);box-shadow:0 0 18px rgba(150,220,255,.35)}
+.pn a:last-child{text-align:right}
+.pn a:only-child{grid-column:1/-1}
+
+/* edición */
+.toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;margin-top:16px;border:1px solid var(--line);border-radius:14px 14px 0 0;background:rgba(20,70,170,.35);position:sticky;top:72px;z-index:10;backdrop-filter:blur(8px)}
+.toolbar button{min-width:38px;height:36px;padding:0 10px;border-radius:9px;border:1px solid var(--line);background:rgba(3,14,40,.7);font-weight:800}
+.toolbar button:hover{background:var(--neon);color:#04122e}
+.editable{max-width:none;margin-top:0;padding:22px;border:1px solid rgba(220,245,255,.55);border-top:0;border-radius:0 0 14px 14px;background:rgba(2,10,32,.6);outline:none;min-height:300px;box-shadow:0 0 22px rgba(120,200,255,.2)}
+.field{width:100%;margin-top:12px;border-radius:12px;border:1px solid var(--line);background:rgba(8,30,80,.7);color:var(--neon);padding:11px 14px;font:inherit}
+.field:focus{outline:none;border-color:var(--neon);box-shadow:0 0 0 3px rgba(190,235,255,.18)}
+.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.hint{font-size:13.5px;color:var(--muted)}
+
+/* historial y discusión */
+.list{display:grid;gap:10px;margin-top:18px}
+.item{padding:14px 16px;border-radius:14px;border:1px solid var(--line);background:rgba(10,38,96,.42)}
+.item .top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.item .who{font:700 15px var(--head);color:var(--neon)}
+.item .when{font-size:13px;color:var(--muted)}
+.item p{margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.badge{font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--neon);color:#04122e;box-shadow:var(--glow);margin-left:8px}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;margin-top:18px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
+.kpi{padding:16px;border-radius:14px;border:1px solid var(--line);background:rgba(20,70,170,.26)}
+.kpi b{display:block;font:800 30px var(--head);color:var(--neon);text-shadow:var(--glow)}
+.kpi span{font-size:13.5px;color:var(--muted)}
+
+/* modal y aviso */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(1,6,20,.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:18px}
+.modal{width:min(760px,100%);max-height:88vh;overflow:auto;padding:24px 26px;border-radius:20px;background:rgba(4,16,44,.98);border:1px solid rgba(220,245,255,.5);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 40px rgba(100,180,255,.25)}
+.modal h3{margin:0 0 12px;font:700 22px var(--head);color:var(--neon);text-shadow:var(--glow)}
+.modal .prose{max-width:none;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);opacity:0;z-index:120;background:var(--neon);color:#04122e;padding:11px 20px;border-radius:999px;font-weight:700;box-shadow:var(--glow);transition:.25s;pointer-events:none}
+.toast.show{transform:translate(-50%,0);opacity:1}
+.scrim{display:none}
+
+@media (max-width:1180px){.shell{grid-template-columns:250px minmax(0,1fr)}.toc{display:none}}
+@media (max-width:860px){
+  .burger{display:grid}
+  .menu,.userchip{display:none}
+  .search{width:auto;flex:1}
+  .shell{grid-template-columns:1fr;padding:84px 12px 30px}
+  .side{position:fixed;z-index:70;top:68px;left:0;bottom:0;width:290px;max-height:none;padding:10px;transform:translateX(-105%);transition:transform .25s}
+  .side.open{transform:none}
+  .side .card{background:rgba(3,13,38,.98)}
+  .scrim.show{display:block;position:fixed;inset:0;z-index:65;background:rgba(1,6,20,.6)}
+  .page{padding:20px 16px}
+  .cover{grid-template-columns:1fr}
+  .pn{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media print{
+  body{background:#fff;color:#000}body::before,#bgArt,.nav,.side,.toc,.tabs,.actions,.pn,.progress,.toolbar{display:none!important}
+  .shell{display:block;padding:0}.card{background:#fff;border:0;box-shadow:none}
+  .prose,.prose h1,.prose h2,.prose h3,.prose p,.prose li,td{color:#000!important;text-shadow:none!important}
+  .titlebar h1{color:#000;text-shadow:none}th{background:#ddd;color:#000}.formula{color:#000;border-color:#000;background:#fff;text-shadow:none}
+}
+</style>
+</head>
+<body>
+<div id="bgArt" aria-hidden="true"></div>
+<div class="progress"><span id="progressBar"></span></div>
+
+<header class="nav">
+  <button class="burger" id="burger" aria-label="Abrir el menú de páginas"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg></button>
+  <a class="brand" href="#/inicio" aria-label="ContaWiki, ir al inicio">
+    <svg viewBox="0 0 40 40" fill="none" stroke="#f6feff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3" width="28" height="34" rx="5"/><rect x="11" y="8" width="18" height="7" rx="1.5"/><path d="M12 22h2M19 22h2M26 22h2M12 28h2M19 28h2M26 28h2"/></svg>
+    <b>ContaWiki</b>
+  </a>
+  <nav class="menu" id="menu" aria-label="Principal"></nav>
+  <div class="sp"></div>
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4" stroke-linecap="round"/></svg>
+    <label class="sr" for="q">Buscar en la wiki</label>
+    <input id="q" type="search" placeholder="Buscar en la wiki  (atajo: /)" autocomplete="off">
+    <div class="results" id="results" role="listbox"></div>
+  </div>
+  <button class="userchip" id="userchip" title="Cambiar mi nombre de colaborador"></button>
+</header>
+
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+  <aside class="side" id="side" aria-label="Páginas de la wiki"></aside>
+  <main class="main" id="main"></main>
+  <aside class="toc" id="toc" aria-label="En esta página"></aside>
+</div>
+<div id="modalRoot"></div>
+<div class="toast" id="toast" role="status"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script>
+(function(){'use strict';
+/* ============================================================
+   CONTENIDO ORIGINAL (transcrito del documento CONTABILIDAD_ENTREGABLE.docx)
+   ============================================================ */
+const PAGES = [
+{
+ id:'inicio', title:'Inicio', icon:'⌂', group:'Wiki',
+ html:`
+<div class="cover">
+  <div>
+    <h1 class="ct">"Construcción Colaborativa de Conceptos Contables y NIIF para Microempresas"</h1>
+    <p class="authors">Kimberly Julieth Pulido Vanegas, Laura Mercedes Tobar Payan, Leidy Carolina Orjuela Aldana, Monjibeli Montiel Márquez Bedoya</p>
+    <div class="meta">
+      <span>Facultad de Ciencias de la Salud y el Deporte, Fundación Universitaria del Área Andina</span>
+      <span>Fundamentos de la contabilidad – Programa de Administración en Salud</span>
+      <span>José Yobanny Beltrán Lozada</span>
+      <span>Octubre de 2026</span>
+    </div>
+  </div>
+  <div class="hero" data-hero></div>
+</div>
+<h2>Contenido de la wiki</h2>
+<div class="tiles">
+  <a class="tile" href="#/cat1"><b>Categoría 1</b><span>Concepto de contabilidad. Objetivos de la contabilidad. Usuarios de la información contable. Importancia de la contabilidad en las organizaciones.</span></a>
+  <a class="tile" href="#/cat2"><b>Categoría 2</b><span>Información Financiera y sus Características Cualitativas</span></a>
+  <a class="tile" href="#/cat3"><b>Categoría 3</b><span>Elementos básicos de los estados financieros: activos, pasivos, patrimonio, ingresos, gastos y costos</span></a>
+  <a class="tile" href="#/cat4"><b>Categoría 4</b><span>¿Qué son las NIIF?</span></a>
+  <a class="tile" href="#/cat5"><b>Categoría 5</b><span>Aplicación Práctica Integral en el Sector Salud</span></a>
+  <a class="tile" href="#/conclusiones"><b>Conclusiones</b><span>Conclusiones individuales y conclusión grupal.</span></a>
+  <a class="tile" href="#/referencias"><b>Referencias</b><span>Fuentes citadas y nota sobre el uso de inteligencia artificial.</span></a>
+</div>`
+},
+
+{
+ id:'cat1', title:'Categoría 1', icon:'1', group:'Contenido', sub:'Concepto, objetivos, usuarios e importancia',
+ html:`
+<h2>Concepto de contabilidad.</h2>
+<p>La contabilidad es una ciencia o disciplina de naturaleza económica, que se ocupa de explicar y normar las tareas de descripción, principalmente cuantitativa, de la existencia y circulación de objetos, hechos y personas diversas en cada ente u organización social y de la proyección de estos en vista al cumplimiento de metas organizacionales a través de sistemas basados en un conjunto de supuestos básicos (Fronti2, 2003).</p>
+<p>Según lo anterior podemos decir la que la contabilidad es una disciplina que se enfoca en atender todas aquellas actividades económicas que presenta un ente, con el fin de llevar a cabo el buen funcionamiento de una institución. Además, podemos indicar que la contabilidad es el ente que se encarga del manejo y proceso de los eventos económicos del patrimonio</p>
+
+<h2>Objetivos de la contabilidad.</h2>
+<p>El objetivo más importante es proporcionarles información financiera de la empresa a las personas y entidades interesadas en conocer los resultados operacionales y la verdadera situación económica de la misma (Díaz, 2006), esto es indispensable para poder realizar la toma de decisiones.</p>
+<p>Otro objetivo es dar a conocerla los resultados de ganancias o pérdidas, informar las causas de dichos resultados. Mucho más importante que saber «cuánto» se gana o se pierde es saber el «porqué» de esas pérdidas y de esas ganancias, para tratar de corregir gastos e incrementar ingresos en lo sucesivo.</p>
+<p>(GARCÍA, 2017).</p>
+<p>Por otra parte, podemos ver la realidad económica de un ente, basado en la elaboración de informes que permiten dar planeación y control económico.</p>
+
+<h2>Usuarios de la información contable.</h2>
+<p><strong>Usuarios internos:</strong> Todas aquellas personas que situados en distintos niveles jerárquicos de la empresa participan en mayor o menor medida en la elaboración de la información contable y la utilizan en decisiones de carácter interno a la misma para la gestión de sus áreas de responsabilidad, tenemos al concejo de administración o director general, jefe de departamento, directivos y mandos intermedios. (Jaime, 2009)</p>
+<p><strong>Usuarios externos</strong>: Son los que utilizan la información financiera, pero no tienen injerencia directa en la administración. Los usuarios externos son los accionistas, acreedores, empleados y el gobierno.</p>
+<p>Con base en lo anterior, se pueden establecer dos áreas en las que puede dividirse la contabilidad, dependiendo del usuario al cual se le presenta la información: la contabilidad financiera enfocada a usuarios externos y la contabilidad administrativa enfocada a usuarios internos. (Díaz, 2006)</p>
+
+<h2>Importancia de la contabilidad en las organizaciones.</h2>
+<p>La contabilidad en una organización es importante para conocer sus estados financieros, llevar un balance de la situación en la que se encuentra la institución, es importante para llevar una planeación, control, para tener un conocimiento de los datos económicos, nos permite saber de un pasado, un presente y obtener noción de un futuro, por lo cual permite anticiparnos a situaciones difíciles que se puedan presentar, por esto podemos decir que da precisión en la toma de decisiones importantes de carácter económico en la institución.</p>
+<p>Podemos tener una visión global de los recursos de la institución, dar manejo a los ingresos y gastos, permite hacer una gestión de administración de una forma correcta, organizada y con un propósito de crecimiento de la organización.</p>`
+},
+
+{
+ id:'cat2', title:'Categoría 2', icon:'2', group:'Contenido', sub:'Información financiera y características cualitativas',
+ html:`
+<p class="lead">Información Financiera y sus Características Cualitativas</p>
+
+<h2>1. Definición</h2>
+<p>Las características de la información financiera son los "filtros de calidad" o los requisitos indispensables que deben cumplir los estados financieros. Esto garantiza que los datos contables no sean solo números sueltos, sino herramientas útiles, claras y transparentes para tomar decisiones estratégicas en cualquier organización, especialmente en el sector salud, donde un error puede afectar la sostenibilidad de un servicio médico.</p>
+
+<h2>2. Explicación clara y argumentada de los conceptos</h2>
+<p>Según los lineamientos contables (inspirados en el marco conceptual de las NIIF), la información financiera útil debe poseer características fundamentales que aseguren su valor para los usuarios internos y externos:</p>
+<ul>
+  <li><strong>Comprensibilidad:</strong> La información debe presentarse de manera clara y concisa para que sea fácil de entender por parte de los administradores, gerentes o inversores que, aunque sepan de gestión, no necesariamente son contadores expertos.</li>
+  <li><strong>Relevancia:</strong> Los datos son relevantes cuando tienen la capacidad de influir en las decisiones económicas de los usuarios. Ayudan a evaluar sucesos pasados, presentes o futuros, o a confirmar/corregir evaluaciones anteriores.</li>
+  <li><strong>Fiabilidad (o representación fiel):</strong> La información es confiable cuando está libre de errores materiales y sesgos, y representa fielmente lo que pretende reflejar. Los datos financieros deben ser neutrales y prudentes.</li>
+  <li><strong>Comparabilidad:</strong> Permite a los usuarios identificar y entender similitudes y diferencias entre tendencias financieras. Se debe poder comparar la información de una clínica u organización de salud a lo largo de diferentes períodos (ej. año 2025 vs. año 2026) o con otras empresas del mismo sector.</li>
+</ul>
+
+<h2>3. Recurso visual</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Característica</th><th>¿Qué busca asegurar?</th><th>Aplicación práctica en administración</th></tr></thead>
+<tbody>
+<tr><td>Comprensibilidad</td><td>Claridad en los informes.</td><td>Que un gerente de salud sin título de contador entienda el balance general.</td></tr>
+<tr><td>Relevancia</td><td>Utilidad para la toma de decisiones.</td><td>Saber si comprar nuevos equipos es financieramente oportuno.</td></tr>
+<tr><td>Fiabilidad</td><td>Transparencia y ausencia de errores.</td><td>Garantizar que los costos de insumos médicos reportados sean reales.</td></tr>
+<tr><td>Comparabilidad</td><td>Análisis temporal o sectorial.</td><td>Comparar el nivel de gastos médicos de este mes con el del mes pasado.</td></tr>
+</tbody></table></div>
+
+<h2>5. Relación con los conceptos estudiados en el Eje 2</h2>
+<p>Estos conceptos se conectan directamente con lo que vimos en el Eje 2 sobre el ciclo contable y la estructura de los estados financieros. La información financiera no surge de la nada; es el resultado final de procesar los hechos económicos (transacciones de compras, pagos de nómina, cobros de EPS) bajo principios contables estandarizados. Si la contabilidad básica registra mal un activo o un gasto, las características de fiabilidad y relevancia se pierden, rompiendo la utilidad de todo el proceso contable.</p>`
+},
+
+{
+ id:'cat3', title:'Categoría 3', icon:'3', group:'Contenido', sub:'Elementos básicos de los estados financieros',
+ html:`
+<p class="lead">Elementos básicos de los estados financieros: activos, pasivos, patrimonio, ingresos, gastos y costos</p>
+
+<h2>Conceptos</h2>
+<h3>Activos</h3>
+<p>Los recursos controlados por una empresa de los cuales se esperan beneficios económicos futuros (dinero, equipo, materiales, máquinas, cuentas por cobrar de clientes).</p>
+<p class="example">Centro de fisioterapia en el sector salud: dinero en su cuenta bancaria, camillas, equipos para terapias y pagos pendientes de algunos pacientes, todos estos recursos son parte de sus activos (siempre que cumplan con las condiciones para ser reconocidos como tales).</p>
+
+<h3>Pasivos</h3>
+<p>Obligaciones que una empresa tiene con otras personas o entidades (obligaciones futuras) derivadas de compras a crédito (préstamos), préstamos bancarios, otros compromisos económicos.</p>
+<p class="example">Clínica de salud: si se compran suministros médicos a crédito o se toma un préstamo para comprar equipos de rehabilitación, entonces las obligaciones de pago pendientes son pasivos cuando cumplen con los criterios contables.</p>
+
+<h3>Patrimonio</h3>
+<p>Interés residual de los propietarios en los activos después de deducir los pasivos. En términos simples, corresponde a la diferencia entre los recursos de la organización y sus obligaciones.</p>
+<p class="example">Ejemplo en el sector salud: si un centro de fisioterapia tiene activos por valor de $18, 000,000 y pasivos de $6, 000,000, su patrimonio contable es de $12,000,000.</p>
+
+<h3>Ingresos</h3>
+<p>Los ingresos son el aumento de los beneficios económicos de una empresa durante un período (servicios prestados, ventas de productos u otras actividades). Los aumentos deben cumplir con los criterios contables para ser reconocidos como ingresos.</p>
+<p class="example">Ejemplo en el sector salud: un centro de fisioterapia ofrece sesiones de rehabilitación a sus pacientes y reconoce ingresos correspondientes a los servicios prestados según las condiciones de operación.</p>
+
+<h3>Gastos</h3>
+<p>Los gastos son disminuciones en los beneficios económicos durante un período (por ejemplo, operaciones de la empresa). Pueden ser pagos por servicios públicos, alquiler, salarios y otros conceptos necesarios para desarrollar la actividad.</p>
+<p class="example">Ejemplo en el sector salud: el pago mensual del alquiler de la clínica, electricidad y servicios administrativos podrían ser gastos del período dependiendo de la naturaleza y tratamiento contable.</p>
+
+<h3>Costos.</h3>
+<p>Los costos corresponden a los recursos económicos utilizados para prestar un servicio o producir o adquirir un producto. Su clasificación depende de la actividad de la empresa y de cómo se utilizan los recursos.</p>
+<p class="example">Ejemplo en el sector salud: materiales consumidos en el cuidado de pacientes o ciertos recursos directamente relacionados con las terapias pueden ser parte de los costos del servicio dependiendo de las circunstancias y políticas contables aplicadas.</p>
+
+<p>Estos conceptos nos permiten saber de dónde provienen los recursos de una empresa, cuáles son sus obligaciones y cómo se determina el resultado de sus operaciones. En Colombia, el marco regulatorio aplicable para microempresas debe consultarse de acuerdo con las condiciones de la entidad y el grupo contable que le corresponda. (Ministerio de Comercio, Industria y Turismo, 2015).</p>
+
+<h2>Relación entre los elementos contables.</h2>
+<p>La relación entre activos, pasivos y patrimonio se expresa mediante la ecuación contable básica:</p>
+<div class="formula">Activo = Pasivo + Patrimonio.</div>
+<p>Esta ecuación significa que los recursos de una empresa se financian mediante obligaciones con terceros o por recursos propios de sus propietarios (entre otros componentes del patrimonio).</p>
+<p>Por otro lado, los ingresos, costos y gastos nos permiten analizar el resultado económico de las actividades durante un período. En términos generales, cuando los ingresos superan los costos y gastos reconocidos, se obtiene una ganancia; si no, es una pérdida. Para calcular el resultado final, también son necesarios los impuestos y otros elementos.</p>
+
+<h2>Aplicación Práctica de los Conceptos Contables.</h2>
+<p>Caso Práctico: Centro de Fisioterapia Vida Activa. Para aplicar los conceptos anteriores, se presenta un caso hipotético de una microempresa llamada Centro de Fisioterapia Vida Activa (servicios de rehabilitación física y atención terapéutica).</p>
+<p>El ejercicio consiste en listar sus activos, pasivos y patrimonio; para calcular el resultado de sus operaciones durante un mes.</p>
+
+<h3>4.1. Identificación de activos, pasivos y patrimonio.</h3>
+<p>La empresa reporta la siguiente información financiera:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Concepto</th><th>Valor</th></tr></thead>
+<tbody>
+<tr><td>Dinero en caja y bancos</td><td class="num">$5.000.000</td></tr>
+<tr><td>Equipos de fisioterapia</td><td class="num">$8.000.000</td></tr>
+<tr><td>Materiales y suministros</td><td class="num">$2.000.000</td></tr>
+<tr><td>Cuentas por cobrar a pacientes</td><td class="num">$3.000.000</td></tr>
+<tr class="total"><td>Total de activos</td><td class="num">$18.000.000</td></tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead><tr><th>Concepto</th><th>Valor</th></tr></thead>
+<tbody>
+<tr><td>Cuentas por pagar a proveedores</td><td class="num">$2.000.000</td></tr>
+<tr><td>Préstamo bancario pendiente</td><td class="num">$4.000.000</td></tr>
+<tr class="total"><td>Total de pasivos</td><td class="num">$6.000.000</td></tr>
+</tbody></table></div>
+<div class="tablewrap"><table>
+<thead><tr><th>Concepto</th><th>Valor</th></tr></thead>
+<tbody>
+<tr class="total"><td>Patrimonio</td><td class="num">$12.000.000</td></tr>
+</tbody></table></div>
+<p class="note">Nota: Los valores son hipotéticos y se utilizan solo con fines académicos.</p>
+<p>Para encontrar el patrimonio, se restan los pasivos de los activos:</p>
+<div class="formula">Patrimonio = Activos − Pasivos</div>
+<p>Así que el patrimonio</p>
+<div class="formula">$18, 000,000-$6, 000,000=$12, 000,000</div>
+<p>Cuando verificamos la ecuación contable obtenemos:</p>
+<div class="formula">$18, 000,000=$6, 000,000+$12, 000,000</div>
+<p>La ecuación está equilibrada porque los activos = suma de pasivos y patrimonio, por lo que la información presentada es válida para la relación contable básica.</p>
+
+<h3>4.2. Cálculo del Resultado Mensual</h3>
+<p>Durante un mes, el centro de fisioterapia registra los siguientes valores:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Concepto</th><th>Valor</th></tr></thead>
+<tbody>
+<tr><td>Ingresos por servicios de fisioterapia</td><td class="num">$12.000.000</td></tr>
+<tr><td>Costos relacionados con los servicios</td><td class="num">$3.200.000</td></tr>
+<tr><td>Gastos de funcionamiento</td><td class="num">$5.100.000</td></tr>
+<tr class="total"><td>Resultado del ejercicio antes de impuestos y de otras partidas no contempladas</td><td class="num">$3.700.000</td></tr>
+</tbody></table></div>
+<p>El resultado del ejercicio se calcula de la siguiente manera:</p>
+<div class="formula">Resultado= Ingresos-Costos- Gastos<br>=$12, 000,000-$3, 200,000-$5, 100,000<br>=$3, 700,000</div>
+<p>Según los datos del ejemplo anterior, el centro tiene un resultado positivo ($3, 700,000) antes de impuestos y otros elementos no incluidos en el ejercicio. En este caso, los ingresos del período superan los costos y gastos registrados.</p>
+<p>En una situación real, la clasificación de cada elemento y el cálculo final del resultado deben realizarse de acuerdo con el marco contable utilizado y las características de cada operación.</p>
+
+<h3>4.3 Registro de operaciones mediante partida doble</h3>
+<p>El material del Eje 2 muestra por qué las operaciones contables deben registrarse de manera organizada y mediante el sistema de partida doble cada transacción afecta al menos dos cuentas; los débitos totales igualan a los créditos totales. (Rubio, s. f.)</p>
+<p>A continuación, se presentan tres operaciones hipotéticas del centro de fisioterapia.</p>
+<div class="tablewrap"><table>
+<thead><tr><th>Operación</th><th>Cuenta débito</th><th>Cuenta crédito</th></tr></thead>
+<tbody>
+<tr><td>Compra de un equipo por $2.000.000, pagado de contado</td><td>Propiedades, planta y equipo: $2.000.000</td><td>Bancos: $2.000.000</td></tr>
+<tr><td>Compra de suministros a crédito por $800.000</td><td>Inventarios o materiales, según su clasificación: $800.000</td><td>Cuentas por pagar a proveedores: $800.000</td></tr>
+<tr><td>Prestación de un servicio por $1.500.000, pendiente de cobro</td><td>Cuentas por cobrar: $1.500.000</td><td>Ingresos por servicios: $1.500.000</td></tr>
+</tbody></table></div>
+<p class="note">Nota. Los registros anteriores son solo ilustrativos. Las cuentas exactas y el reconocimiento de cada evento económico dependen de las condiciones de la transacción y las políticas contables utilizadas.</p>
+<h4>Análisis de operaciones</h4>
+<ul>
+  <li>En la compra de equipo, el valor del equipo de la empresa aumenta y el dinero disponible en bancos disminuye.</li>
+  <li>En la compra de suministros a crédito, el recurso adquirido aumenta y la obligación pendiente con el proveedor también aumenta.</li>
+  <li>En la prestación de servicio a crédito, la cuenta por cobrar aumenta y se reconoce el ingreso cuando se cumplen las condiciones.</li>
+</ul>
+<p>En los tres casos, el valor del débito es igual al valor del crédito. Esa igualdad mantiene el equilibrio de los registros contables en orden.</p>
+
+<h3>4.4. Relación del Caso Práctico con el Proceso Contable del Eje 2</h3>
+<p>El ejercicio anterior relaciona los conceptos estudiados con las etapas del proceso contable descrito en el material Fundamentos de Contabilidad (Rubio, s.f.).</p>
+<ol class="steps">
+  <li><strong>Recolección de documentos:</strong> se recopilan facturas de compra, documentos de soporte de servicios, recibos de pago y documentos de préstamo.</li>
+  <li><strong>Registro de Operaciones:</strong> se identifican las cuentas afectadas y se registran los débitos y créditos para cada transacción.</li>
+  <li><strong>Clasificación y Organización.</strong> Las operaciones se clasifican por cuentas y fechas para facilitar la consulta y revisión.</li>
+  <li><strong>Preparación de Información Financiera.</strong> Con registros organizados, se preparan informes que muestran activos, pasivos, patrimonio y resultado de operaciones</li>
+</ol>
+<p>El proceso es importante porque un error en el registro o clasificación de una operación puede influir en la información financiera. Se necesitan documentos de soporte y revisión de movimientos contables para que la información sea clara y útil.</p>`
+},
+
+{
+ id:'cat4', title:'Categoría 4', icon:'4', group:'Contenido', sub:'NIIF para microempresas',
+ html:`
+<h2>1. ¿Qué son las NIIF?</h2>
+<p>Las Normas Internacionales de Información Financiera (NIIF) (siglas en inglés, como su propio nombre indica, son un conjunto de estándares de lenguaje contable para presentar los estados financieros de las empresas, que hoy se aplican en muchos países. Su objetivo es unificar un lenguaje de contabilidad entre todos los países que participen en el mercado global. También son conocidas por su denominación de siglas en inglés: International Financial Reporting Standards (IFRS).</p>
+<p>Hay 2 tipos de NIF</p>
+<ul>
+  <li><strong>NIIF completas (IFRS Full):</strong> Están diseñadas para empresas que cotizan en bolsa o que tienen responsabilidad pública de rendir cuentas. Son más extensas y detalladas en sus requerimientos.</li>
+  <li><strong>NIIF para pymes:</strong> Son una versión simplificada pensada para pequeñas y medianas empresas que no tienen obligación pública de rendir cuentas. Contienen menos requisitos de revelación y opciones de medición más sencillas.</li>
+</ul>
+
+<h2>2. Objetivos de las NIIF.</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Objetivos</th><th>Beneficios</th></tr></thead>
+<tbody>
+<tr><td>✅ Mejorar la calidad de la información financiera</td><td>Estados financieros más fiables, claros y útiles para la toma de decisiones.</td></tr>
+<tr><td>🌎 Facilitar la comparabilidad internacional</td><td>Permite comparar empresas de diferentes países bajo los mismos criterios contables.</td></tr>
+<tr><td>🔍 Promover la transparencia financiera</td><td>Garantiza la divulgación de información relevante para los usuarios.</td></tr>
+<tr><td>💰 Reducir costos de información multinacional</td><td>Las empresas pueden utilizar un único marco contable en varios países.</td></tr>
+<tr><td>🤝 Fortalecer la confianza de los inversores</td><td>Genera mayor credibilidad y seguridad en las decisiones de inversión.</td></tr>
+<tr><td>📈 Contribuir a la estabilidad de los mercados globales</td><td>Facilita la identificación de riesgos y una mejor asignación de recursos.</td></tr>
+</tbody></table></div>
+
+<h2>3. Beneficios para las microempresas.</h2>
+<p>Los beneficios de aplicar las NIIF pueden analizarse desde la perspectiva de cada uno de los principales usuarios de la información financiera.</p>
+<p><strong>Ventajas para las empresas:</strong></p>
+<ul>
+  <li>Acceso más fácil a mercados de capitales internacionales al presentar estados financieros reconocidos globalmente.</li>
+  <li>Reducción de costos al preparar un solo juego de estados financieros para diferentes jurisdicciones.</li>
+  <li>Mayor credibilidad ante socios comerciales, bancos y potenciales inversores extranjeros.</li>
+  <li>Mejor gestión interna gracias a información financiera más estructurada y detallada</li>
+</ul>
+
+<h2>Aplicación en pequeñas organizaciones y la importancia para el sector salud</h2>
+<div class="tablewrap"><table>
+<thead><tr><th>Estado financiero</th><th>Propósito principal</th><th>Información que presenta</th><th>Importancia</th></tr></thead>
+<tbody>
+<tr><td>Estado de situación financiera</td><td>Mostrar la situación económica de la entidad en una fecha determinada.</td><td>Activos, pasivos y patrimonio.</td><td>Permite conocer los recursos, las obligaciones y el valor neto de la organización.</td></tr>
+<tr><td>Estado de resultados y otro resultado integral</td><td>Evaluar el desempeño financiero durante un período.</td><td>Ingresos, gastos, ganancias, pérdidas y otros resultados integrales.</td><td>Ayuda a determinar si la entidad obtuvo utilidad o pérdida y cómo fue su rendimiento.</td></tr>
+<tr><td>Estado de cambios en el patrimonio</td><td>Evidenciar las variaciones en el patrimonio.</td><td>Aportes de socios, dividendos, utilidades retenidas, pérdidas y reservas.</td><td>Permite identificar el origen de los cambios en los recursos propios de la entidad.</td></tr>
+<tr><td>Estado de flujos de efectivo</td><td>Mostrar el movimiento de efectivo y equivalentes de efectivo.</td><td>Entradas y salidas de efectivo por actividades de operación, inversión y financiación.</td><td>Facilita evaluar la liquidez y la capacidad de cumplir obligaciones financieras.</td></tr>
+<tr><td>Notas a los estados financieros</td><td>Complementar y explicar la información financiera presentada.</td><td>Políticas contables, detalles de cuentas, estimaciones y revelaciones relevantes.</td><td>Mejoran la comprensión, transparencia y confiabilidad de los estados financieros.</td></tr>
+</tbody></table></div>`
+},
+
+{
+ id:'cat5', title:'Categoría 5', icon:'5', group:'Contenido', sub:'Aplicación práctica en el sector salud',
+ html:`
+<p class="lead">Aplicación Práctica Integral en el Sector Salud</p>
+<p>Para demostrar cómo interactúan todos los conceptos contables en el mundo real, seleccionamos una microempresa del sector salud: el "Centro Médico y de Especialidades VitalSalud S.A.S.", un pequeño centro ambulatorio de atención médica primaria y laboratorios clínicos en nuestra comunidad.</p>
+<p>A continuación, explicamos cómo se aplica cada categoría teórica en la operación diaria de este negocio:</p>
+
+<h2>1. Aplicación de los Fundamentos de Contabilidad</h2>
+<p>En Vital Salud S.A.S., la contabilidad no es solo un requisito legal, sino una herramienta de supervivencia gerencial.</p>
+<ul>
+  <li><strong>Objetivos:</strong> Permite controlar los cobros a las EPS, pagar a los médicos a tiempo y saber si el centro está generando ganancias o pérdidas reales mes a mes.</li>
+  <li><strong>Usuarios:</strong> Los usuarios internos son el médico director y el administrador, quienes usan los datos para decidir si contratan más personal o compran un nuevo equipo de electrocardiograma; los usuarios externos son la DIAN (para temas fiscales) y el banco local (si necesitan un préstamo para remodelar el consultorio).</li>
+</ul>
+
+<h2>2. Aplicación de la Información Financiera y sus Características</h2>
+<p>Cuando el administrador de Vital Salud presenta el reporte mensual al comité de socios, este debe cumplir con:</p>
+<ul>
+  <li><strong>Comprensibilidad y Relevancia:</strong> Los informes no deben estar llenos de tecnicismos inentendibles; deben mostrar claramente si la consulta externa está dando más rentabilidad que el servicio de laboratorio (relevancia para tomar decisiones de expansión).</li>
+  <li><strong>Fiabilidad y Comparabilidad:</strong> Los costos de los insumos médicos (guantes, jeringas, reactivos) deben ser reales y sin errores (fiabilidad), y se deben poder comparar con el mes anterior para ver si el consumo de materiales se disparó injustificadamente (comparabilidad).</li>
+</ul>
+
+<h2>3. Integración de los Elementos Básicos de los Estados Financieros</h2>
+<p>En la contabilidad diaria de este centro médico, vemos reflejados los siguientes elementos:</p>
+<ul>
+  <li><strong>Activos:</strong> El ecógrafo portátil, el mobiliario de la sala de espera, el dinero en la cuenta bancaria del negocio y las facturas pendientes por cobrar a las EPS.</li>
+  <li><strong>Pasivos:</strong> Las deudas pendientes con los proveedores de medicamentos y los salarios acumulados del personal médico que se pagan a fin de mes.</li>
+  <li><strong>Patrimonio:</strong> El capital inicial que aportaron los médicos socios para abrir el consultorio, más las utilidades acumuladas que se han reinvertido en el centro.</li>
+  <li><strong>Ingresos:</strong> El dinero recibido por la venta de bonos de consulta médica y la realización de exámenes de laboratorio.</li>
+  <li><strong>Gastos:</strong> El pago de los servicios públicos (luz y agua de los consultorios), el mantenimiento de los equipos y el alquiler del local.</li>
+  <li><strong>Costos:</strong> El valor directo de los insumos médicos desechables gastados estrictamente en la atención de cada paciente.</li>
+</ul>
+
+<h2>4. Aplicación de las NIIF para Microempresas</h2>
+<p>Dado que Vital Salud S.A.S. es una microempresa del sector salud que no cotiza en bolsa y maneja un volumen pequeño de operaciones, aplica el marco simplificado de las NIIF para Microempresas:</p>
+<ul>
+  <li><strong>Beneficios:</strong> Les permite llevar una contabilidad estandarizada, clara y transparente sin incurrir en los costos complejos de las grandes corporaciones.</li>
+  <li><strong>Importancia en salud:</strong> Al aplicar estas normas, el centro garantiza que sus estados financieros sean confiables ante cualquier auditoría del Ministerio de Salud o entidades de control, asegurando que los recursos destinados a la salud se manejen con total transparencia y ética profesional.</li>
+</ul>`
+},
+
+{
+ id:'conclusiones', title:'Conclusiones', icon:'✓', group:'Cierre', sub:'Individuales y grupal',
+ html:`
+<h2>CONCLUSIONES</h2>
+<div class="quote"><p>La contabilidad es base fundamental en una organización, nosotros como administradores debemos tener claros los conceptos básicos de dicha ciencia, para obtener un control adecuado, una planeación estratégica y clara de la información financiera, así realizar una toma de decisiones eficaz y eficiente, logrando un buen manejo de los recursos y garantizando la adecuada operatividad de la institución. (Monjibeli Márquez)</p></div>
+<div class="quote"><p>Comprendí que la contabilidad en la administración en salud no se trata simplemente de sumar y restar, sino de generar información de calidad. Si los datos financieros carecen de comprensibilidad, relevancia, fiabilidad o comparabilidad, los directivos de una institución de salud tomarán decisiones a ciegas que pueden poner en riesgo la prestación de los servicios a los pacientes y la estabilidad financiera del centro médico. (Kimberly pulido)</p></div>
+<div class="quote"><p>A través de esta actividad, pude comprender mejor la relación entre los elementos básicos de los estados financieros y su relevancia para la operación de una empresa los activos muestran los recursos disponibles, los pasivos representan obligaciones y el patrimonio muestra la diferencia entre ellos; los ingresos, costos y gastos ayudan a analizar el resultado de las operaciones. El ejemplo del centro de fisioterapia muestra cómo estos conceptos funcionan en una situación diaria en el sector salud. También muestra que registrar operaciones con sus soportes y la igualdad entre débitos y créditos organizan la información contable. Creo que este conocimiento es útil para gestionar una microempresa porque controla recursos, muestra qué obligaciones pendientes existen y proporciona información para tomar mejores decisiones. Conocer el marco regulatorio aplicable ayuda a preparar información financiera de manera organizada según los requisitos correspondientes. (Laura Tobar)</p></div>
+<div class="quote"><p>Para las microempresas, pequeñas organizaciones y entidades de salud, las NIIF son una herramienta que contribuye al crecimiento, mejora la gestión financiera y fortalece la credibilidad de la organización en un mundo cada vez más conectado y competitivo. (Leidy Orjuela).</p></div>
+
+<h2>CONCLUSION GRUPAL</h2>
+<div class="quote"><p>Uniendo todos los puntos, pudimos comprobar como futuros administradores en salud que la contabilidad, guiada por las NIIF, no es una camisa de fuerza teórica, sino el "sistema circulatorio" de cualquier empresa médica. Desde registrar un simple gasto de gasa hasta evaluar los estados financieros bajo estrictas normas de fiabilidad, todo se conecta para garantizar que el centro de salud sea sostenible, preste un servicio humano de calidad y cumpla con su misión social y financiera.</p></div>`
+},
+
+{
+ id:'referencias', title:'Referencias', icon:'R', group:'Cierre', sub:'Fuentes y nota sobre IA',
+ html:`
+<h2>Referencias</h2>
+<ul class="refs">
+  <li>Díaz, H. (2006). CONTABILIDAD GENERAL. En H. Díaz, <em>CONTABILIDAD GENERAL</em> (pág. 418). Naucalpan de Juárez, Estado de México.: <a href="https://d1wqtxts1xzle7.cloudfront.net/55673851/Contabilidad_general._Enfoque_practico_con_aplicaciones_informaticas_-_Hernando_Diaz_-_2ed-libre.pdf?1517339484=&amp;response-content-disposition=inline%3B+filename%3DEnfoque_practico_con_aplicaciones_inform.pdf&amp;" target="_blank" rel="noopener noreferrer">https://d1wqtxts1xzle7.cloudfront.net/55673851/Contabilidad_general._Enfoque_practico_con_aplicaciones_informaticas_-_Hernando_Diaz_-_2ed-libre.pdf?1517339484=&amp;response-content-disposition=inline%3B+filename%3DEnfoque_practico_con_aplicaciones_inform.pdf&amp;</a>.</li>
+  <li>Fronti2, C. L. (junio de 2003). <em>SciELO - Scientific Electronic Library Online</em>. Obtenido de SciELO - Scientific Electronic Library Online: <a href="http://www.scielo.org.co/scielo.php?pid=S0121-50512003000100010&amp;script=sci_arttext" target="_blank" rel="noopener noreferrer">http://www.scielo.org.co/scielo.php?pid=S0121-50512003000100010&amp;script=sci_arttext</a></li>
+  <li>GARCÍA, J. O. (2017). <em>CONTABILIDAD.</em> Barcelona: <a href="https://biblioteca.ips.edu.pe/assets/uploads/libro_689ca3f9caaaf.pdf" target="_blank" rel="noopener noreferrer">https://biblioteca.ips.edu.pe/assets/uploads/libro_689ca3f9caaaf.pdf</a>.</li>
+  <li>Jaime, J. J. (2009). <em>Contabilidad financiera I.</em> <a href="https://books.google.com.co/books?hl=es&amp;lr=&amp;id=6m42LTDkhzoC&amp;oi=fnd&amp;pg=PA5&amp;dq=cuales+son+los+usuarios+de+la+contabilidad&amp;ots=sOxGJjKn-z&amp;sig=XnoJe8fDgeGoCmpk5u-xTN3gpds&amp;redir_esc=y#v=onepage&amp;q&amp;f=false" target="_blank" rel="noopener noreferrer">https://books.google.com.co/books?hl=es&amp;lr=&amp;id=6m42LTDkhzoC&amp;oi=fnd&amp;pg=PA5&amp;dq=cuales+son+los+usuarios+de+la+contabilidad&amp;ots=sOxGJjKn-z&amp;sig=XnoJe8fDgeGoCmpk5u-xTN3gpds&amp;redir_esc=y#v=onepage&amp;q&amp;f=false</a>.</li>
+  <li>Gudiño, E., &amp; Coral, L. (2016). Contabilidad 2000 (6ª ed.). McGraw-Hill Interamericana.</li>
+  <li>International Accounting Standards Board (IASB). (2015). Norma Internacional de Información Financiera para Pequeñas y Medianas Entidades (NIIF para las PYMES). Fundación IFRS.</li>
+  <li>Zapata Sánchez, P. (2017). Contabilidad general con enfoque NIIF para Colombia (8ª ed.). Alfaomega.</li>
+  <li>IFRS Foundation. (2018). Conceptual framework for financial reporting. <a href="https://www.ifrs.org/issued-standards/list-of-standards/conceptual-framework/" target="_blank" rel="noopener noreferrer">https://www.ifrs.org/issued-standards/list-of-standards/conceptual-framework/</a></li>
+  <li>Ministerio de Comercio, Industria y Turismo. (2015). Decreto 2420 de 2015: Por medio del cual se expide el Decreto Único Reglamentario de las Normas de Contabilidad, de Información Financiera y de Aseguramiento de la Información y se dictan otras disposiciones. Función Pública. <a href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=76055" target="_blank" rel="noopener noreferrer">https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=76055</a></li>
+  <li>Rubio, M. (s. f.). Fundamentos de contabilidad: Eje 2. Analicemos la situación [Material de estudio del curso].</li>
+  <li>Contabilidad y Finanzas. (s.f.). Normas internacionales de información financiera (NIIF).20 de octubre de 2026, de Contabilidad y Finanzas</li>
+</ul>
+<h3>Nota sobre el uso de inteligencia artificial.</h3>
+<p>Para la elaboración de este informe se utilizó la herramienta de inteligencia artificial Claude Sonnet 5.5 (Anthropic, 2026) como apoyo en la organización de ideas, la redacción de borradores, organización y comprensión la búsqueda de fuentes y el formato. El análisis del caso se basó en el referente de pensamiento del Eje 2 y las fuentes citadas fueron revisadas por el estudiante quien asume la responsabilidad del trabajo final.</p>`
+}
+];
+/* ============================================================
+   ARTE DE FONDO (SVG): contabilidad
+   ============================================================ */
+function bgSVG(){
+  let s='<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#eaf6ff" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2">';
+  // columnas de cifras tenues
+  s+='<g fill="#eaf6ff" stroke="none" font-family="monospace" font-size="20" opacity=".06">';
+  for(let r=0;r<15;r++){let t='';for(let c=0;c<12;c++)t+=((r*7919+c*104729)%90000+10000).toLocaleString('es-CO')+'   ';s+=`<text x="20" y="${40+r*62}">${t}</text>`;}
+  s+='</g><g opacity=".2">';
+  // libro mayor
+  s+='<g transform="translate(70 430) rotate(-6)"><rect width="330" height="260" rx="10"/><path d="M60 0v260M0 50h330"/>';
+  for(let i=0;i<8;i++)s+=`<path d="M0 ${80+i*24}h330" stroke-opacity=".7"/>`;
+  s+='<path d="M215 50v210M270 50v210" stroke-opacity=".7"/></g>';
+  // barras + línea de tendencia
+  s+='<g transform="translate(60 0)">';
+  const hs=[70,110,95,150,190,170,240];
+  hs.forEach((h,i)=>{s+=`<rect x="${100+i*58}" y="${830-h}" width="40" height="${h}" rx="4"/>`;});
+  s+='<path d="M110 735L168 700 226 718 284 650 342 610 400 628 458 560"/><path d="M458 560l-22 2M458 560l-5 20"/><path d="M80 832H540"/></g>';
+  // calculadora
+  s+='<g transform="translate(1200 90) rotate(9)"><rect width="270" height="400" rx="26"/><rect x="26" y="28" width="218" height="74" rx="10"/><text x="228" y="86" font-family="monospace" font-size="42" fill="#eaf6ff" stroke="none" text-anchor="end">3.700</text>';
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++)s+=`<rect x="${28+c*55}" y="${130+r*60}" width="42" height="44" rx="9"/>`;
+  s+='</g>';
+  // monedas
+  s+='<g transform="translate(1030 740)">';
+  for(let i=0;i<5;i++)s+=`<ellipse cx="0" cy="${-i*20}" rx="64" ry="20"/><path d="M-64 ${-i*20}v14a64 20 0 0 0 128 0v-14"/>`;
+  s+='<ellipse cx="190" cy="-6" rx="54" ry="17"/><path d="M136 -6v12a54 17 0 0 0 108 0v-12"/><ellipse cx="190" cy="-26" rx="54" ry="17"/><path d="M136 -26v12a54 17 0 0 0 108 0v-12"/></g>';
+  // balanza
+  s+='<g transform="translate(700 90)"><path d="M150 20v170M95 190h110M40 52h220"/><path d="M40 52l-34 100h68zM260 52l34 100h-68z"/><path d="M6 152a34 14 0 0 0 68 0M226 152a34 14 0 0 0 68 0"/><circle cx="150" cy="16" r="9"/></g>';
+  s+='</g>';
+  // glifos grandes
+  s+='<g fill="#eaf6ff" stroke="none" font-family="Sora,Georgia,serif" font-weight="800" opacity=".09"><text x="520" y="640" font-size="300">Σ</text><text x="1330" y="820" font-size="260">%</text><text x="830" y="470" font-size="230">$</text></g>';
+  return s+'</g></svg>';
+}
+function heroSVG(){
+  let b='';
+  [50,86,72,118,150,136,186].forEach((h,i)=>{b+=`<rect x="${30+i*34}" y="${236-h}" width="22" height="${h}" rx="3" fill="rgba(160,215,255,.18)"/>`;});
+  let k='';
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++)k+=`<rect x="${326+c*33}" y="${106+r*34}" width="25" height="24" rx="6"/>`;
+  let coins='';
+  for(let i=0;i<4;i++)coins+=`<ellipse cx="120" cy="${290-i*13}" rx="44" ry="13" fill="rgba(4,17,48,.8)"/><path d="M76 ${290-i*13}v9a44 13 0 0 0 88 0v-9"/>`;
+  return `<svg viewBox="0 0 520 330" fill="none" stroke="#f6feff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Ilustración de calculadora, gráfico de barras y monedas">
+  <path d="M20 240H300" stroke-opacity=".7"/>${b}
+  <path d="M42 205L76 178 110 190 144 144 178 118 212 130 246 82" stroke-width="3"/><path d="M246 82l-17 2M246 82l-3 16"/>
+  <g transform="rotate(7 390 190)"><rect x="306" y="34" width="150" height="230" rx="18" fill="rgba(4,17,48,.55)"/><rect x="320" y="48" width="122" height="44" rx="8"/><text x="434" y="82" font-family="monospace" font-size="26" fill="#f6feff" stroke="none" text-anchor="end">12.000</text>${k}</g>
+  ${coins}
+  <path d="M232 300c20-14 54-14 74 0" stroke-opacity=".6"/><text x="236" y="322" font-family="monospace" font-size="16" fill="#f6feff" stroke="none">A = P + Pt</text></svg>`;
+}
+
+/* ============================================================
+   UTILIDADES Y ESTADO (persistencia local del navegador)
+   ============================================================ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const fmt=ts=>new Date(ts).toLocaleString('es-CO',{dateStyle:'medium',timeStyle:'short'});
+const norm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const KEY='contawiki.v1';
+let S={user:'',pages:{}}, memStore=null;
+try{const r=localStorage.getItem(KEY); if(r) S=JSON.parse(r);}catch(e){ if(memStore) S=memStore; }
+S.pages=S.pages||{}; S.user=S.user||'';
+function persist(){ memStore=S; try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){} }
+const P=id=>PAGES.find(p=>p.id===id);
+const pd=id=>S.pages[id]||(S.pages[id]={revs:[],comments:[]});
+const lastRev=id=>{const r=pd(id).revs; return r.length?r[r.length-1]:null;};
+const curHTML=id=>{const r=lastRev(id); return r?r.html:P(id).html;};
+
+function sanitize(html){
+  const d=new DOMParser().parseFromString(html,'text/html');
+  d.querySelectorAll('script,iframe,object,embed,style,link,meta,form,base,svg[onload]').forEach(n=>n.remove());
+  d.querySelectorAll('*').forEach(el=>{[...el.attributes].forEach(a=>{
+    const n=a.name.toLowerCase();
+    if(n.startsWith('on')||n==='style'||((n==='href'||n==='src')&&/^\s*(javascript|data|vbscript):/i.test(a.value))) el.removeAttribute(a.name);
+  });});
+  return d.body.innerHTML;
+}
+const textOf=html=>{const d=new DOMParser().parseFromString(html,'text/html');return d.body.textContent.replace(/\s+/g,' ').trim();};
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('show'),2600);}
+
+function modal({title,body,actions=[],onClose}){
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="overlay" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal"><h3>${esc(title)}</h3><div class="mb"></div><div class="row mfoot"></div></div></div>`;
+  const mb=$('.mb',root); if(typeof body==='string') mb.innerHTML=body; else mb.appendChild(body);
+  const foot=$('.mfoot',root);
+  const close=()=>{root.innerHTML=''; document.removeEventListener('keydown',esc_); onClose&&onClose();};
+  const esc_=e=>{if(e.key==='Escape')close();};
+  document.addEventListener('keydown',esc_);
+  actions.forEach(a=>{const b=document.createElement('button');b.className='btn '+(a.cls||'');b.textContent=a.label;b.onclick=()=>a.run?a.run(close):close();foot.appendChild(b);});
+  $('.overlay',root).addEventListener('mousedown',e=>{if(e.target.classList.contains('overlay'))close();});
+  const f=$('input,textarea',root); if(f) f.focus();
+  return close;
+}
+function askName(){
+  return new Promise(res=>{
+    if(S.user) return res(S.user);
+    askNameForce().then(res);
+  });
+}
+function askNameForce(){
+  return new Promise(res=>{
+    let done=false;
+    modal({title:'¿Cómo te llamas?',
+      body:`<p class="hint">Tu nombre quedará asociado a tus ediciones y comentarios en el historial de la wiki.</p><input class="field" id="nm" maxlength="60" placeholder="Nombre de colaborador" value="${esc(S.user)}">`,
+      actions:[{label:'Cancelar',run:c=>{c();if(!done)res('');}},{label:'Guardar nombre',cls:'primary',run:c=>{const v=$('#nm').value.trim();if(!v){$('#nm').focus();return;}S.user=v;persist();done=true;c();paintUser();res(v);}}],
+      onClose:()=>{if(!done)res('');}});
+    $('#nm').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=e.target.value.trim();if(v){S.user=v;persist();done=true;$('#modalRoot').innerHTML='';paintUser();res(v);}}});
+  });
+}
+function paintUser(){
+  const u=$('#userchip'); const n=S.user||'Invitado';
+  u.innerHTML=`<i>${esc(n.trim().charAt(0).toUpperCase())}</i><span>${esc(n)}</span>`;
+  u.setAttribute('aria-label','Colaborador actual: '+n+'. Clic para cambiar el nombre.');
+}
+
+/* ============================================================
+   MENÚ SUPERIOR, BARRA LATERAL
+   ============================================================ */
+function paintMenu(cur){
+  const cats=PAGES.filter(p=>p.group==='Contenido');
+  $('#menu').innerHTML=`
+   <a href="#/inicio" class="${cur==='inicio'?'on':''}">Inicio</a>
+   <div class="dd" id="ddCat"><button aria-haspopup="true" aria-expanded="false">Categorías <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+     <div class="dd-list">${cats.map(p=>`<a href="#/${p.id}">${esc(p.title)}<small>${esc(p.sub||'')}</small></a>`).join('')}</div></div>
+   <a href="#/conclusiones" class="${cur==='conclusiones'?'on':''}">Conclusiones</a>
+   <a href="#/referencias" class="${cur==='referencias'?'on':''}">Referencias</a>
+   <a href="#/cambios" class="${cur==='cambios'?'on':''}">Cambios recientes</a>
+   <div class="dd" id="ddCol"><button aria-haspopup="true" aria-expanded="false">Colaborar <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg></button>
+     <div class="dd-list"><button data-act="name">Cambiar mi nombre</button><button data-act="export">Exportar respaldo (.json)</button><button data-act="import">Importar y combinar respaldo</button><button data-act="print">Imprimir esta página</button></div></div>`;
+  $$('.dd',$('#menu')).forEach(dd=>{
+    const btn=$('button',dd);
+    btn.onclick=e=>{e.stopPropagation();const o=dd.classList.contains('open');$$('.dd.open').forEach(x=>x.classList.remove('open'));if(!o)dd.classList.add('open');btn.setAttribute('aria-expanded',String(!o));};
+  });
+  $$('[data-act]',$('#menu')).forEach(b=>b.onclick=()=>{ $$('.dd.open').forEach(x=>x.classList.remove('open')); action(b.dataset.act); });
+}
+document.addEventListener('click',()=>$$('.dd.open').forEach(x=>x.classList.remove('open')));
+function action(a){
+  if(a==='name') askNameForce().then(v=>{if(v)toast('Nombre actualizado');});
+  if(a==='export') exportJSON();
+  if(a==='import') $('#importFile').click();
+  if(a==='print') window.print();
+}
+function paintSide(cur){
+  const groups=['Wiki','Contenido','Cierre'];
+  const edits=Object.values(S.pages).reduce((n,p)=>n+p.revs.length,0), coms=Object.values(S.pages).reduce((n,p)=>n+p.comments.length,0);
+  let h='<div class="card">';
+  groups.forEach(g=>{
+    h+=`<h4>${g==='Wiki'?'Wiki':g==='Contenido'?'Categorías':'Cierre del trabajo'}</h4>`;
+    PAGES.filter(p=>p.group===g).forEach(p=>{
+      const ed=pd(p.id).revs.length>0;
+      h+=`<a class="item ${cur===p.id?'on':''}" href="#/${p.id}"><span class="ic">${esc(p.icon)}</span><span>${esc(p.title)}${p.sub?`<small>${esc(p.sub)}</small>`:''}</span>${ed?'<span class="dot" title="Tiene ediciones de la comunidad"></span>':''}</a>`;
+    });
+  });
+  h+=`<h4>Comunidad</h4><a class="item ${cur==='cambios'?'on':''}" href="#/cambios"><span class="ic">↻</span><span>Cambios recientes<small>Ediciones y comentarios</small></span></a>
+  <div class="stat"><b>${edits}</b> ediciones y <b>${coms}</b> comentarios guardados en este navegador.<button class="btn sm" data-act="export">Exportar respaldo</button></div></div>`;
+  $('#side').innerHTML=h;
+  $$('[data-act]',$('#side')).forEach(b=>b.onclick=()=>action(b.dataset.act));
+  $$('a',$('#side')).forEach(a=>a.addEventListener('click',()=>closeSide()));
+}
+const openSide=()=>{$('#side').classList.add('open');$('#scrim').classList.add('show');};
+const closeSide=()=>{$('#side').classList.remove('open');$('#scrim').classList.remove('show');};
+
+/* ============================================================
+   PÁGINAS
+   ============================================================ */
+const main=$('#main');
+function fillHero(root){$$('[data-hero]',root).forEach(h=>h.innerHTML=heroSVG());}
+function fixLinks(root){$$('a[href^="http"]',root).forEach(a=>{a.target='_blank';a.rel='noopener noreferrer';});}
+
+function pageShell(p,tab,inner){
+  const pdt=pd(p.id);
+  return `<article class="card page">
+   <div class="crumbs"><a href="#/inicio">ContaWiki</a> / ${esc(p.title)}</div>
+   <div class="titlebar"><h1>${esc(p.title)}</h1>
+     <div class="actions">
+       ${tab==='editar'?'':`<a class="btn primary" href="#/${p.id}/editar"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>Editar</a>`}
+       <button class="btn" data-act="print"><svg viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>Imprimir</button>
+     </div></div>
+   <div class="tabs" role="tablist">
+     <a href="#/${p.id}" class="${tab===''?'on':''}">Artículo</a>
+     <a href="#/${p.id}/discusion" class="${tab==='discusion'?'on':''}">Discusión<em>${pdt.comments.length}</em></a>
+     <a href="#/${p.id}/historial" class="${tab==='historial'?'on':''}">Historial<em>${pdt.revs.length+1}</em></a>
+   </div>${inner}</article>`;
+}
+function prevNext(id){
+  const order=PAGES.map(p=>p.id), i=order.indexOf(id), a=P(order[i-1]), b=P(order[i+1]);
+  return `<div class="pn">${a?`<a href="#/${a.id}"><small>Anterior</small>${esc(a.title)}</a>`:''}${b?`<a href="#/${b.id}"><small>Siguiente</small>${esc(b.title)}</a>`:''}</div>`;
+}
+
+function viewArticle(p){
+  const r=lastRev(p.id);
+  const meta=r?`<span>Última edición de ${esc(r.author)}</span><span>${fmt(r.ts)}</span><span>${esc(r.summary||'Sin resumen')}</span>`:`<span>Versión original del documento de Word, sin ediciones de la comunidad.</span>`;
+  main.innerHTML=pageShell(p,'',`<div class="prose" id="body">${curHTML(p.id)}</div><div class="metaline">${meta}</div>${prevNext(p.id)}`);
+  const body=$('#body'); fillHero(body); fixLinks(body);
+  if(p.id==='inicio'||p.id==='conclusiones') body.classList.add('wide');
+  buildToc(body);
+}
+
+function viewEdit(p){
+  main.innerHTML=pageShell(p,'editar',`
+   <div class="toolbar" id="tb" role="toolbar" aria-label="Formato">
+     <button data-c="bold" title="Negrita"><b>B</b></button><button data-c="italic" title="Cursiva"><i>I</i></button>
+     <button data-c="h2" title="Título de sección">H2</button><button data-c="h3" title="Subtítulo">H3</button><button data-c="p" title="Párrafo">P</button>
+     <button data-c="ul" title="Lista con viñetas">• Lista</button><button data-c="ol" title="Lista numerada">1. Lista</button>
+     <button data-c="link" title="Insertar enlace">Enlace</button><button data-c="clear" title="Quitar formato">Tx</button>
+     <button data-c="undo" title="Deshacer">↶</button><button data-c="redo" title="Rehacer">↷</button>
+   </div>
+   <div class="prose editable" id="editor" contenteditable="true" spellcheck="true" aria-label="Contenido editable de ${esc(p.title)}">${curHTML(p.id)}</div>
+   <input class="field" id="summary" maxlength="140" placeholder="Resumen de tu edición (qué cambiaste y por qué)">
+   <div class="row"><button class="btn glow" id="save">Guardar cambios</button><a class="btn" href="#/${p.id}">Cancelar</a>
+   <span class="hint">Cada guardado crea una versión nueva en el historial; la versión original siempre se puede restaurar.</span></div>`);
+  const ed=$('#editor'); fillHero(ed);
+  $$('#tb button').forEach(b=>{
+    b.onmousedown=e=>e.preventDefault();
+    b.onclick=()=>{
+      const c=b.dataset.c; ed.focus();
+      if(c==='h2'||c==='h3'||c==='p') document.execCommand('formatBlock',false,c);
+      else if(c==='ul') document.execCommand('insertUnorderedList');
+      else if(c==='ol') document.execCommand('insertOrderedList');
+      else if(c==='link'){const u=prompt('Dirección del enlace (https://...)'); if(u&&/^https?:\/\//i.test(u)) document.execCommand('createLink',false,u); else if(u) toast('El enlace debe empezar por http:// o https://');}
+      else if(c==='clear') document.execCommand('removeFormat');
+      else document.execCommand(c);
+    };
+  });
+  $('#save').onclick=async()=>{
+    const clone=ed.cloneNode(true); $$('[data-hero]',clone).forEach(h=>h.innerHTML='');
+    const html=sanitize(clone.innerHTML).trim();
+    if(!textOf(html)){toast('La página no puede quedar vacía');return;}
+    if(html===sanitize(curHTML(p.id)).trim()){toast('No hay cambios para guardar');return;}
+    const who=await askName(); if(!who) return;
+    pd(p.id).revs.push({id:uid(),ts:Date.now(),author:who,summary:$('#summary').value.trim(),html});
+    persist(); toast('Edición guardada en el historial'); location.hash='#/'+p.id;
+  };
+}
+
+function viewHistory(p){
+  const revs=pd(p.id).revs, rows=[];
+  [...revs].reverse().forEach((r,i)=>rows.push({r,cur:i===0}));
+  let h=`<div class="list">`;
+  rows.forEach(({r,cur})=>{
+    h+=`<div class="item"><div class="top"><div><span class="who">${esc(r.author)}</span>${cur?'<span class="badge">Versión actual</span>':''}</div><span class="when">${fmt(r.ts)}</span></div>
+      <p>${esc(r.summary||'Sin resumen')}</p>
+      <div class="row"><button class="btn sm" data-view="${r.id}">Ver versión</button>${cur?'':`<button class="btn sm" data-restore="${r.id}">Restaurar esta versión</button>`}</div></div>`;
+  });
+  const origCur=revs.length===0;
+  h+=`<div class="item"><div class="top"><div><span class="who">Documento de Word original</span>${origCur?'<span class="badge">Versión actual</span>':''}</div><span class="when">Octubre de 2026</span></div>
+    <p>Texto transcrito del documento CONTABILIDAD_ENTREGABLE.docx.</p>
+    <div class="row"><button class="btn sm" data-view="orig">Ver versión</button>${origCur?'':'<button class="btn sm" data-restore="orig">Restaurar versión original</button>'}</div></div></div>`;
+  main.innerHTML=pageShell(p,'historial',h);
+  $$('[data-view]').forEach(b=>b.onclick=()=>{
+    const html=b.dataset.view==='orig'?P(p.id).html:revs.find(x=>x.id===b.dataset.view).html;
+    const box=document.createElement('div'); box.className='prose wide'; box.innerHTML=sanitize(html); fillHero(box); fixLinks(box);
+    modal({title:'Vista previa de la versión',body:box,actions:[{label:'Cerrar'}]});
+  });
+  $$('[data-restore]').forEach(b=>b.onclick=async()=>{
+    const who=await askName(); if(!who) return;
+    const id=b.dataset.restore, html=id==='orig'?P(p.id).html:revs.find(x=>x.id===id).html;
+    pd(p.id).revs.push({id:uid(),ts:Date.now(),author:who,summary:id==='orig'?'Restauró la versión original del documento':'Restauró una versión anterior',html:sanitize(html)});
+    persist(); toast('Versión restaurada'); location.hash='#/'+p.id;
+  });
+}
+
+function viewDiscussion(p){
+  const cs=[...pd(p.id).comments].sort((a,b)=>b.ts-a.ts);
+  let h=`<div class="row" style="display:block"><label class="sr" for="ctext">Escribe un comentario</label><textarea class="field" id="ctext" rows="4" maxlength="2000" placeholder="Aporta una duda, una corrección o una sugerencia para esta página"></textarea>
+    <div class="row"><button class="btn glow" id="post">Publicar comentario</button></div></div>`;
+  h+=cs.length?`<div class="list">${cs.map(c=>`<div class="item"><div class="top"><span class="who">${esc(c.author)}</span><span class="when">${fmt(c.ts)}</span></div><p>${esc(c.text)}</p>${c.author===S.user?`<div class="row"><button class="btn sm danger" data-del="${c.id}">Eliminar</button></div>`:''}</div>`).join('')}</div>`:`<div class="empty">Aún no hay comentarios. Escribe el primero para abrir la conversación sobre esta página.</div>`;
+  main.innerHTML=pageShell(p,'discusion',h);
+  $('#post').onclick=async()=>{
+    const t=$('#ctext').value.trim(); if(!t){toast('Escribe un comentario primero');return;}
+    const who=await askName(); if(!who) return;
+    pd(p.id).comments.push({id:uid(),ts:Date.now(),author:who,text:t}); persist(); toast('Comentario publicado'); route();
+  };
+  $$('[data-del]').forEach(b=>b.onclick=()=>{const a=pd(p.id);a.comments=a.comments.filter(c=>c.id!==b.dataset.del);persist();route();});
+}
+
+function viewChanges(){
+  const ev=[];
+  PAGES.forEach(p=>{const d=pd(p.id); d.revs.forEach(r=>ev.push({t:'rev',p,r,ts:r.ts})); d.comments.forEach(c=>ev.push({t:'com',p,c,ts:c.ts}));});
+  ev.sort((a,b)=>b.ts-a.ts);
+  const edits=ev.filter(e=>e.t==='rev').length, coms=ev.length-edits, people=new Set(ev.map(e=>(e.r||e.c).author)).size;
+  let h=`<div class="grid2"><div class="kpi"><b>${edits}</b><span>Ediciones de contenido</span></div><div class="kpi"><b>${coms}</b><span>Comentarios</span></div><div class="kpi"><b>${people}</b><span>Colaboradores</span></div><div class="kpi"><b>${PAGES.length}</b><span>Páginas en la wiki</span></div></div>
+   <div class="row"><button class="btn primary" data-act="export">Exportar respaldo (.json)</button><button class="btn" data-act="import">Importar y combinar respaldo</button><span class="hint">Para colaborar: cada integrante exporta su respaldo y los demás lo importan; las ediciones y comentarios se combinan sin borrar nada.</span></div>`;
+  h+=ev.length?`<div class="list">${ev.map(e=>e.t==='rev'
+     ?`<div class="item"><div class="top"><div><span class="who">${esc(e.r.author)}</span> editó <a href="#/${e.p.id}">${esc(e.p.title)}</a></div><span class="when">${fmt(e.ts)}</span></div><p>${esc(e.r.summary||'Sin resumen')}</p></div>`
+     :`<div class="item"><div class="top"><div><span class="who">${esc(e.c.author)}</span> comentó en <a href="#/${e.p.id}/discusion">${esc(e.p.title)}</a></div><span class="when">${fmt(e.ts)}</span></div><p>${esc(e.c.text)}</p></div>`).join('')}</div>`
+    :`<div class="empty">Todavía no hay actividad. Abre cualquier página y pulsa Editar, o deja un comentario en la pestaña Discusión.</div>`;
+  main.innerHTML=`<article class="card page"><div class="crumbs"><a href="#/inicio">ContaWiki</a> / Cambios recientes</div><div class="titlebar"><h1>Cambios recientes</h1></div><div class="prose wide" style="margin-top:6px">${h}</div></article>`;
+  $$('[data-act]',main).forEach(b=>b.onclick=()=>action(b.dataset.act));
+}
+
+/* ============================================================
+   TABLA DE CONTENIDO LATERAL (scroll-spy)
+   ============================================================ */
+function buildToc(body){
+  const hs=$$('h2,h3',body), toc=$('#toc');
+  if(!hs.length){toc.innerHTML='';return;}
+  hs.forEach((h,i)=>h.id='s'+i);
+  toc.innerHTML=`<div class="card"><h4>En esta página</h4>${hs.map((h,i)=>`<a class="${h.tagName==='H3'?'l3':''}" href="#" data-t="s${i}">${esc(h.textContent)}</a>`).join('')}</div>`;
+  $$('a',toc).forEach(a=>a.onclick=e=>{e.preventDefault();document.getElementById(a.dataset.t).scrollIntoView({behavior:'smooth',block:'start'});});
+  spy=()=>{let cur=hs[0].id;hs.forEach(h=>{if(h.getBoundingClientRect().top<140)cur=h.id;});$$('a',toc).forEach(a=>a.classList.toggle('on',a.dataset.t===cur));};
+  spy();
+}
+let spy=null;
+window.addEventListener('scroll',()=>{
+  const d=document.documentElement, p=d.scrollTop/(d.scrollHeight-d.clientHeight||1);
+  $('#progressBar').style.width=(p*100)+'%'; spy&&spy();
+},{passive:true});
+
+/* ============================================================
+   BÚSQUEDA
+   ============================================================ */
+const qi=$('#q'), rs=$('#results');
+qi.addEventListener('input',()=>{
+  const q=qi.value.trim(); if(q.length<2){rs.classList.remove('show');rs.innerHTML='';return;}
+  const nq=norm(q), out=[];
+  PAGES.forEach(p=>{
+    const txt=textOf(curHTML(p.id)), nt=norm(txt), i=nt.indexOf(nq), tm=norm(p.title).includes(nq);
+    if(i<0&&!tm) return;
+    let sn='';
+    if(i>=0){
+      const a=Math.max(0,i-55), b=Math.min(txt.length,i+q.length+95);
+      if(nt.length===txt.length) sn=(a>0?'…':'')+esc(txt.slice(a,i))+'<mark>'+esc(txt.slice(i,i+q.length))+'</mark>'+esc(txt.slice(i+q.length,b))+(b<txt.length?'…':'');
+      else sn=esc(txt.slice(a,b));
+    }
+    out.push(`<a href="#/${p.id}"><b>${esc(p.title)}</b><span>${sn||esc(p.sub||'')}</span></a>`);
+  });
+  rs.innerHTML=out.length?out.join(''):`<div class="none">No hay resultados para “${esc(q)}”. Prueba con otra palabra, por ejemplo patrimonio o NIIF.</div>`;
+  rs.classList.add('show');
+});
+rs.addEventListener('click',()=>{rs.classList.remove('show');qi.value='';});
+document.addEventListener('click',e=>{if(!e.target.closest('.search'))rs.classList.remove('show');});
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&!document.activeElement.isContentEditable){e.preventDefault();qi.focus();}
+  if(e.key==='Escape'){rs.classList.remove('show');qi.blur();closeSide();}
+});
+
+/* ============================================================
+   COLABORACIÓN: exportar / importar y combinar
+   ============================================================ */
+function exportJSON(){
+  const data={app:'contawiki',version:1,exportado:new Date().toISOString(),pages:S.pages};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download='contawiki-respaldo-'+new Date().toISOString().slice(0,10)+'.json'; document.body.appendChild(a); a.click(); a.remove();
+  toast('Respaldo exportado');
+}
+$('#importFile').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const d=JSON.parse(rd.result); if(d.app!=='contawiki'||typeof d.pages!=='object') throw new Error('formato');
+      let nr=0,nc=0;
+      Object.keys(d.pages).forEach(id=>{
+        if(!P(id)) return; const t=pd(id), s=d.pages[id]||{};
+        (Array.isArray(s.revs)?s.revs:[]).forEach(r=>{
+          if(r&&typeof r.id==='string'&&typeof r.html==='string'&&!t.revs.some(x=>x.id===r.id)){t.revs.push({id:r.id.slice(0,40),ts:+r.ts||Date.now(),author:String(r.author||'Anónimo').slice(0,60),summary:String(r.summary||'').slice(0,140),html:sanitize(r.html)});nr++;}
+        });
+        (Array.isArray(s.comments)?s.comments:[]).forEach(c=>{
+          if(c&&typeof c.id==='string'&&typeof c.text==='string'&&!t.comments.some(x=>x.id===c.id)){t.comments.push({id:c.id.slice(0,40),ts:+c.ts||Date.now(),author:String(c.author||'Anónimo').slice(0,60),text:String(c.text).slice(0,2000)});nc++;}
+        });
+        t.revs.sort((a,b)=>a.ts-b.ts);
+      });
+      persist(); toast(`Importado: ${nr} ediciones y ${nc} comentarios nuevos`); route();
+    }catch(err){ modal({title:'No se pudo importar',body:'<p>El archivo no es un respaldo válido de ContaWiki. Importa un archivo .json creado con la opción Exportar respaldo.</p>',actions:[{label:'Entendido'}]}); }
+    e.target.value='';
+  };
+  rd.readAsText(f);
+});
+
+/* ============================================================
+   ENRUTADOR
+   ============================================================ */
+function route(){
+  const [id='inicio',tab='']=location.hash.replace(/^#\/?/,'').split('/');
+  const cur=id==='cambios'?'cambios':(P(id)?id:'inicio');
+  paintMenu(cur); paintSide(cur); spy=null; $('#toc').innerHTML='';
+  if(cur==='cambios'){ viewChanges(); }
+  else{
+    const p=P(cur);
+    if(tab==='editar') viewEdit(p); else if(tab==='historial') viewHistory(p); else if(tab==='discusion') viewDiscussion(p); else viewArticle(p);
+    document.title=p.title+' – ContaWiki';
+  }
+  $$('[data-act="print"]',main).forEach(b=>b.onclick=()=>window.print());
+  window.scrollTo({top:0,behavior:'instant'in window?'instant':'auto'});
+  closeSide();
+}
+window.addEventListener('hashchange',route);
+$('#burger').onclick=openSide; $('#scrim').onclick=closeSide;
+$('#userchip').onclick=()=>action('name');
+$('#bgArt').innerHTML=bgSVG();
+paintUser(); route();
+})();
+</script>
+</body></html>
